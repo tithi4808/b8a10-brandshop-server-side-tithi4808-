@@ -13,7 +13,7 @@ app.get('/', (req, res) => {
 })
 
 
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const uri = `mongodb+srv://${process.env.USERID}:${process.env.USERPASS}@cluster0.3vwvgpx.mongodb.net/?retryWrites=true&w=majority`;
 
 
@@ -38,6 +38,14 @@ async function run() {
         const database1 = client.db("brands");
         const brandsCollection = database1.collection("brands");
 
+        const database2 = client.db("Details");
+        const detailsCollection = database2.collection("Details");
+
+        const database3 = client.db("Carts");
+        const CartCollection = database3.collection("Cart");
+
+
+
         app.get("/Products",async(req,res)=>{
 
           const cursor=ProductsCollection.find()
@@ -46,9 +54,36 @@ async function run() {
 
 
         })
+
+        app.get("/Products/:id",async(req,res)=>{
+
+          const id=req.params.id
+          
+           const query = {_id:new ObjectId(id)}
+           const result = await ProductsCollection.findOne(query);
+           res.send(result)
+
+
+        })
+        app.get("/details",async(req,res)=>{
+
+          const cursor=detailsCollection.find()
+          const result = await cursor.toArray()
+          res.send(result)
+
+
+        })
         app.get("/brands",async(req,res)=>{
 
           const cursor=brandsCollection.find()
+          const result = await cursor.toArray()
+          res.send(result)
+
+
+        })
+        app.get("/cart",async(req,res)=>{
+
+          const cursor=CartCollection.find()
           const result = await cursor.toArray()
           res.send(result)
 
@@ -68,6 +103,58 @@ async function run() {
           res.send(result)
           console.log(result)
         })
+
+        app.put("/Products/:id",async(req,res)=>{
+          const id=req.params.id
+          const product=req.body
+          const filter={_id:new ObjectId(id)}
+          const option={upsert:true}
+          const updatedproduct={
+            $set:{
+              name:product.name,
+              brand_name:product.brand_name,
+              type:product.type,
+              price:product.price,
+              rating:product.rating,
+              image:product.image
+
+            }
+
+            
+          }
+          const result=await ProductsCollection.updateOne(filter,updatedproduct,option)
+          res.send(result)
+          
+          
+        })
+
+        app.post("/details",async(req,res)=>{
+          const newdetails=req.body
+          const result = await detailsCollection.insertOne(newdetails);
+          res.send(result)
+          console.log(result)
+        })
+
+        app.post("/cart",async(req,res)=>{
+          const newcart=req.body
+          const result = await CartCollection.insertOne(newcart);
+          res.send(result)
+          console.log(result)
+        })
+
+        app.delete("/cart/:_id",async(req,res)=>{
+          const id=req.params._id
+          
+           const query = {_id:new ObjectId(id)}
+           const result = await CartCollection.deleteOne(query);
+           res.send(result)
+
+          
+        })
+
+       
+
+        
 
 
 
